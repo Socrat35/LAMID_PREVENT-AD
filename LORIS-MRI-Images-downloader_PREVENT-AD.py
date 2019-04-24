@@ -3,7 +3,7 @@
 
 # # PREVENT-AD MRI images downloader
 
-# In[1]:
+# In[ ]:
 
 
 import getpass  # For input prompt not to show what is entered
@@ -12,7 +12,7 @@ import requests # To handle HTTP requests
 import os       # Operating System library to create directories and files
 import errno    # For python 2.7 compatibility
 
-# Pyhton 2.7 compatibility
+# Python 2.7 compatibility
 try:
     input = raw_input
 except NameError:
@@ -25,7 +25,7 @@ baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
 # ### Login procedure  
 # This will ask for your username and password and print the login result
 
-# In[2]:
+# In[ ]:
 
 
 print('Login on ' + hostname)
@@ -59,7 +59,7 @@ else:
 # 
 # It wont download files that already exists. This validation is based on filename solely and not on it content... yet
 
-# In[7]:
+# In[ ]:
 
 
 # Get the list of all the candidates
