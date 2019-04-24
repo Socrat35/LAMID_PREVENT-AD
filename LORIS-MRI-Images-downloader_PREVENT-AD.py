@@ -3,13 +3,20 @@
 
 # # PREVENT-AD MRI images downloader
 
-# In[ ]:
+# In[1]:
 
 
 import getpass  # For input prompt not to show what is entered
 import json     # Provide convenient functions to handle JSON objects 
 import requests # To handle HTTP requests
 import os       # Operating System library to create directories and files
+import errno    # For python 2.7 compatibility
+
+# Pyhton 2.7 compatibility
+try:
+    input = raw_input
+except NameError:
+    pass
 
 hostname = 'openpreventad.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
@@ -18,7 +25,7 @@ baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
 # ### Login procedure  
 # This will ask for your username and password and print the login result
 
-# In[ ]:
+# In[2]:
 
 
 print('Login on ' + hostname)
@@ -44,6 +51,7 @@ if (response.status_code == 200):
     print('login successfull')
 else:
     print(text)
+    exit()
 
 
 # ### Extraction  
@@ -51,7 +59,7 @@ else:
 # 
 # It wont download files that already exists. This validation is based on filename solely and not on it content... yet
 
-# In[ ]:
+# In[7]:
 
 
 # Get the list of all the candidates
@@ -83,8 +91,13 @@ for candidate in candidates['Candidates']:
         directory = candid + '/' + visit
         try:
             os.makedirs(directory)
-        except FileExistsError:
-            pass
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                print(errno.EEXIST)
+                print(e.errno)
+                raise
         
         # Get the session information
         session = json.loads(requests.get(
