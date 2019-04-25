@@ -1,4 +1,16 @@
 #!/bin/bash
+cat <<GREETINGS
+
+-------------------------------------------------------------------------------
+Checking if python is installed and if all the required package are available.
+
+This will try to install the missing package using pip if any. If pip is not
+installed, it will try to install it using apt-get.
+
+sudo might be required.
+-------------------------------------------------------------------------------
+
+GREETINGS
 
 function installpip {
     pythonversion=`python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
@@ -16,6 +28,7 @@ function installpackage {
     if [[ -z "${pip}" ]]; then
         installpip
     fi
+    echo "installing package ${1}"
     pip install $1
 }
 
@@ -23,7 +36,10 @@ function installpackage {
 python=`which python`
 if [[ -z "${python}" ]]; then
     echo 'python is not installed. Aborting.'
+    exit
 fi
+echo 'python is installed'
+echo ''
 
 #checking if all packages are available
 declare -a packages=("sys" "getopt" "os" "errno" "getpass" "json" "requests")
@@ -33,5 +49,11 @@ do
         echo "package ${package} not found."
         installpackage ${package}
     fi
+    echo "package ${package} installed" 
 done
 
+echo ''
+echo '-------------------------------------------------------------------------------'
+echo 'Requirements fulfilled'
+echo '-------------------------------------------------------------------------------'
+echo ''
