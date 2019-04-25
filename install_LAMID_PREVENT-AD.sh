@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 
 function installpip {
     pythonversion=`python3 -c 'import sys; print(".".join(map(str, sys.version_info[:2])))'`
