@@ -7,7 +7,9 @@ Checking if python is installed and if all the required package are available.
 This will try to install the missing package using pip if any. If pip is not
 installed, it will try to install it using apt-get.
 
-sudo might be required.
+This should work on python 2.7 and 3+
+
+sudo might be required
 -------------------------------------------------------------------------------
 
 GREETINGS
@@ -35,8 +37,8 @@ function installpackage {
 # Checking if python is installed
 python=`which python`
 if [[ -z "${python}" ]]; then
-    echo 'python is not installed. Aborting.'
-    exit
+    echo 'python is not installed. Installing using apt-get'
+    apt-get install python3
 fi
 echo 'python is installed'
 echo ''
