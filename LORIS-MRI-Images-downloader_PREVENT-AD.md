@@ -26,7 +26,7 @@ This ask the user to specify a directory where files shoudl be downloaded
 
 ```python
 
-if '-fu' in sys.argv:
+if '-f' in sys.argv:
     outputdir = input("Download directory absolute path :\n(press ENTER for current directory)") or os.getcwd()
 
 else:    
@@ -37,7 +37,7 @@ else:
       sys.exit(2)
     for opt, arg in opts:
       if opt == '-h':
-         print(__file__ + ' -o <outputdir>)
+         print(__file__ + ' -o <outputdir>')
          sys.exit()
       elif opt == '-o':
          outputdir = arg
