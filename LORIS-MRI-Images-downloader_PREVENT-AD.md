@@ -1,13 +1,14 @@
 
-# PREVENT-AD MRI images downloader
+# LORIS API MRI images downloader for PREVENT-AD 
 
 
 ```python
-import getpass  # For input prompt not to show what is entered
-import json     # Provide convenient functions to handle JSON objects 
-import requests # To handle HTTP requests
-import os       # Operating System library to create directories and files
-import errno    # For python 2.7 compatibility
+import sys, getopt  # For script options
+import os           # Operating System library to create directories and files
+import errno        # For python 2.7 compatibility
+import getpass      # For input prompt not to show what is entered
+import json         # Provide convenient functions to handle JSON objects 
+import requests     # To handle HTTP requests
 
 # Python 2.7 compatibility
 try:
@@ -17,6 +18,37 @@ except NameError:
 
 hostname = 'openpreventad.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
+```
+
+### Script options handling
+This ask the user to specify a directory where files shoudl be downloaded
+
+
+```python
+
+if '-fu' in sys.argv:
+    outputdir = input("Download directory absolute path :\n(press ENTER for current directory)") or os.getcwd()
+
+else:    
+    outputdir = os.getcwd()
+    try:
+      opts, args = getopt.getopt(sys.argv[1:],"ho:")
+    except getopt.GetoptError:
+      sys.exit(2)
+    for opt, arg in opts:
+      if opt == '-h':
+         print(__file__ + ' -o <outputdir>)
+         sys.exit()
+      elif opt == '-o':
+         outputdir = arg
+
+if not os.path.isdir(outputdir):
+    print('outputdir not writable')
+    exit()
+
+print("\n*******************************************")
+print('Files will be downloaded in ' + outputdir + '/')
+print("*******************************************\n")
 ```
 
 ### Login procedure  
@@ -74,6 +106,23 @@ for candidate in candidates['Candidates']:
     
     print('Processing candidate #' + candid + "\n")
     
+    # Create the a directory for the candidate if it doesn't already exists
+    directory = outputdir + '/' + candid
+    try:
+        os.makedirs(directory)
+    except OSError as e:
+        if e.errno == errno.EEXIST:
+            pass
+        else:
+            print(errno.EEXIST)
+            print(e.errno)
+            raise
+    
+    # Write the candidate information into a JSON file
+    candidatemetafile = open(directory + '/candidate.json', "w")
+    candidatemetafile.write(str(candidate))
+    candidatemetafile.close()
+        
     # Get that candidate's list of sessions
     sessions = json.loads(requests.get(
         url = baseurl + '/candidates/' + candid,
@@ -83,8 +132,9 @@ for candidate in candidates['Candidates']:
     print(str(len(sessions['Visits'])) + " sessions found\n")
     
     for visit in sessions['Visits']:
+        
         # Create the directory for that visit if it doesn't already exists
-        directory = candid + '/' + visit
+        directory = outputdir + '/' + candid + '/' + visit
         try:
             os.makedirs(directory)
         except OSError as e:
