@@ -162,39 +162,56 @@ for candidate in candidates['Candidates']:
             headers = {'Authorization': 'Bearer %s' % token}
         ).content.decode('ascii'))
         
-        print(str(len(files['Files'])) + ' files found for session ' + visit)
+        sessionfilecount = len(files['Files'])
+        sys.stdout.write(str(sessionfilecount) + ' files found for session ' + visit)
         
+        downloadcount = 0
         for file in files['Files']:
             filename = file['Filename']
+            basename = os.path.basename(filename)
+            etagfullpath = directory + '/.' + basename + '.etag'
+            
+            etag = ''
+            # Check if an ETag file is present
+            if os.path.isfile(etagfullpath):
+                etagfile = open(etagfullpath, "r")
+                etag = etagfile.read()
+                etagfile.close()
             
             # Download the image if it doesn't already exist
-            relativepath = directory + '/' + filename
-            if not os.path.isfile(relativepath):
-                image = requests.get(
-                    url = baseurl + '/candidates/' + candid + '/' + visit + '/images/' + filename,
-                    headers = {'Authorization': 'Bearer %s' % token}
-                )
-                mincfile = open(relativepath, "w+b")
+            image = requests.get(
+                url = baseurl + '/candidates/' + candid + '/' + visit + '/images/' + filename,
+                headers = {'Authorization': 'Bearer %s' % token, 'If-None-Match': etag}
+            )
+            
+            # Saving the file only if transfered. 
+            # Requests for unmodified files will be answered by HTTP 304 Not Modified
+            if image.status_code == 200:
+                downloadcount +=1
+                imagefilename = directory + '/' + filename
+                mincfile = open(imagefilename, "w+b")
                 mincfile.write(bytes(image.content))
                 
+            etagfile = open(etagfullpath, "w")
+            etagfile.write(image.headers['ETag'])
+            etagfile.close()
+                
             # Download the QC information of the image if it doesn't already exist
-            relativepath = directory + '/' + filename + '.qc.json'
-            if not os.path.isfile(relativepath):
+            qcfullpath = directory + '/' + filename + '.qc.json'
+            if not os.path.isfile(qcfullpath):
                 qc = requests.get(
                     url = baseurl + '/candidates/' + candid + '/' + visit + '/images/' + filename + '/qc',
                     headers = {'Authorization': 'Bearer %s' % token}
                 )
-                qcfile = open(relativepath, "w+b")
+                qcfile = open(qcfullpath, "w+b")
                 qcfile.write(bytes(qc.content))
-              
+                
+        unmodified = sessionfilecount - downloadcount
+        print(' - ' + str(downloadcount) + ' downloaded, ' + str(unmodified) + ' unmodified')
+        
     processedcandidates += 1
     print("\n-------------------------------------------")
     print(str(processedcandidates) + ' out of ' + str(candidatetotal) + ' candidates processed')
     print("-------------------------------------------\n")
             
-```
-
-
-```python
-
 ```
