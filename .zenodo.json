@@ -1,0 +1,33 @@
+{
+    "description": "<p><strong>LORIS MRI Downloader for the open PREVENT-AD dataset</strong></p>\n\n<p>Due to the size (~200 GB) of the imaging dataset of the open PREVENT-AD dataset, it is not possible to download the entire study&rsquo;s imaging dataset via the browser. However, various ways to download the imaging dataset are provided in this repository.</p>", 
+    "license": "GPL-3.0", 
+    "title": "LAMID_PREVENT-AD", 
+    "version": "1.0.1", 
+    "upload_type": "software", 
+    "keywords": [
+        "Neuroimaging", 
+        "LORIS"
+    ], 
+    "publication_date": "2019-08-01", 
+    "creators": [
+        {
+            "name": "Xavier Lecours"
+        }, 
+        {
+            "name": "cmadjar"
+        }
+    ], 
+    "access_right": "open", 
+    "related_identifiers": [
+        {
+            "scheme": "url", 
+            "identifier": "https://github.com/xlecours/LAMID_PREVENT-AD/tree/1.0.1", 
+            "relation": "isSupplementTo"
+        }, 
+        {
+            "scheme": "doi", 
+            "identifier": "10.5281/zenodo.3358047", 
+            "relation": "isVersionOf"
+        }
+    ]
+}
