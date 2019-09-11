@@ -1,5 +1,5 @@
 # LORIS MRI Downloader for the open PREVENT-AD dataset
-
+[![DOI](https://zenodo.org/badge/183080104.svg)](https://zenodo.org/badge/latestdoi/183080104)
 
 ## 1. Description
 
