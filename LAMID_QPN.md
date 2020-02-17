@@ -1,5 +1,5 @@
 
-# LORIS API MRI images downloader for PREVENT-AD 
+# LORIS API MRI images downloader for QPN 
 
 
 ```python
@@ -16,12 +16,12 @@ try:
 except NameError:
     pass
 
-hostname = 'openpreventad.loris.ca'
+hostname = 'qpn-new-dev.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
 ```
 
 ### Script options handling
-This ask the user to specify a directory where files shoudl be downloaded
+This ask the user to specify a directory where files should be downloaded
 
 
 ```python
@@ -84,7 +84,7 @@ else:
 ```
 
 ### Extraction  
-For each visits of each candidates this will create a directory `/<CandID>/<VisitLable>` and download all this files and their qc info into it.  
+For each visits of each candidates this will create a directory `/<CandID>/<VisitLabel>` and download all this files and their QC info into it.  
 
 It wont download files that already exists. This validation is based on filename solely and not on it content... yet
 
@@ -132,6 +132,10 @@ for candidate in candidates['Candidates']:
     print(str(len(sessions['Visits'])) + " sessions found\n")
     
     for visit in sessions['Visits']:
+        
+        # skip non-MRI visits
+        if 'MRI' not in visit:
+            continue
         
         # Create the directory for that visit if it doesn't already exists
         directory = outputdir + '/' + candid + '/' + visit

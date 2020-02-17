@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # LORIS API MRI images downloader for PREVENT-AD 
+# # LORIS API MRI images downloader for QPN
 
 # In[ ]:
 
@@ -19,7 +19,7 @@ try:
 except NameError:
     pass
 
-hostname = 'openpreventad.loris.ca'
+hostname = 'qpn-new-dev.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
 
 
@@ -137,6 +137,10 @@ for candidate in candidates['Candidates']:
     print(str(len(sessions['Visits'])) + " sessions found\n")
     
     for visit in sessions['Visits']:
+
+        # skip non-MRI visits
+        if 'MRI' not in visit:
+            continue
         
         # Create the directory for that visit if it doesn't already exists
         directory = outputdir + '/' + candid + '/' + visit
