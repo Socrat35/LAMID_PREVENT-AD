@@ -67,7 +67,7 @@ else:
 
     outputdir = os.getcwd()
     try:
-      opts, args = getopt.getopt(sys.argv[1:], "ho:t:")
+      opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:")
     except getopt.GetoptError:
       sys.exit(2)
     for opt, arg in opts:
@@ -97,7 +97,7 @@ if requested_modalities:
     requested_modalities_list = str(requested_modalities).split(',')
     for requested_modality in requested_modalities_list:
         if requested_modality not in loris_scan_types:
-            print(requested_modality + 'is not a valid PREVENT-AD modality')
+            print(requested_modality + ' is not a valid PREVENT-AD modality')
             exit(2)
 
 # ### Login procedure  
@@ -126,7 +126,7 @@ text = response.content.decode('ascii')
 # If the response is successful (HTTP 200), extract the JWT token 
 if response.status_code == 200:
     token = json.loads(text)['token']
-    print('login successfull')
+    print('\t=> login successful\n\n')
 else:
     print(text)
     exit()
@@ -178,11 +178,40 @@ def download_file(file_link, local_directory):
 def is_modality_in_the_requested_list(modality):
 
     for requested_scan_type in requested_modalities_list:
-        pattern = '/-|_' + modality + '-|_/'
-        if re.search(pattern, requested_scan_type):
-            return True
+        if requested_scan_type == 'bold':
+            return True if modality == 'bold' else False
+        else:
+            pattern = re.compile(r'[-_]?' + requested_scan_type + '[-_]?')
+            if pattern.search(modality):
+                return True
 
     return False
+
+
+def find_out_list_of_images_to_download(images_list):
+
+    requested_images_list = []
+    for image_dict in images_list:
+        image_modality = image_dict['LorisScanType'] if 'LorisScanType' in image_dict.keys() else image_dict['ScanType']
+        # skip if the user provided modalities to download and the file's scan type is not included in the modalities requested by the user
+        if requested_modalities and not is_modality_in_the_requested_list(image_modality):
+            continue
+        requested_images_list.append(image_dict.copy())
+
+    return requested_images_list
+
+
+def find_out_list_of_sessions_with_images(downloaded_images_list, sessions_list):
+
+    downloaded_sessions = []
+    for image_dict in downloaded_images_list:
+        candidate   = image_dict['Candidate']
+        visit_label = image_dict['Visit']
+        for session in sessions_list:
+            if session['Candidate'] == candidate and session['Visit'] == visit_label:
+                downloaded_sessions.append(session.copy())
+
+    return downloaded_sessions
 
 
 # ### Data download
@@ -305,62 +334,40 @@ elif downloadtype == 'bids':
     ).content.decode('ascii'))
 
     # Download README, dataset_description.json, participants.tsv, participants.json and .bids-validator-config.json
-    print("-------------------------------------------\n")
-    print('Downloading study level BIDS files...\n')
-    print("-------------------------------------------\n")
+    print("-------------------------------------------")
+    print('Downloading study level BIDS files...')
+    print("-------------------------------------------")
     download_count = 0
     for filetype in ['README', 'DatasetDescription', 'Participants', 'BidsValidatorConfig']:
         if filetype == 'Participants':
             download_success = download_file(bids_endpoints['Participants']['TsvLink'], outputdir)
             if download_success:
                 download_count += 1
+                print('- Downloaded ' + os.path.basename(bids_endpoints['Participants']['JsonLink']))
             download_success = download_file(bids_endpoints['Participants']['JsonLink'], outputdir)
             if download_success:
                 download_count += 1
+                print('- Downloaded ' + os.path.basename(bids_endpoints['Participants']['TsvLink']))
         else:
             download_success = download_file(bids_endpoints[filetype]['Link'], outputdir)
             if download_success:
                 download_count += 1
-    print('\t=> Downloaded ' + str(download_count) + ' new files\n\n')
-
-    # Download the *scans.tsv visit files
-    scans_total = len(bids_endpoints['SessionFiles'])
-    print("-------------------------------------------\n")
-    print('Downloading visit level *scans.tsv and *scans.json files...\n')
-    print(str(scans_total) + ' visit level *_scans.* BIDS files found\n')
-    print("-------------------------------------------\n")
-    download_count = 0
-    for file_dict in bids_endpoints['SessionFiles']:
-        visit_directory = outputdir + '/' + file_dict['Candidate'] + '/' + file_dict['Visit']
-        try:
-            os.makedirs(visit_directory)
-        except OSError as e:
-            if e.errno == errno.EEXIST:
-                pass
-            else:
-                print(errno.EEXIST)
-                print(e.errno)
-                raise
-        download_success = download_file(file_dict['TsvLink'], visit_directory)
-        if download_success:
-            download_count += 1
-        download_success = download_file(file_dict['JsonLink'], visit_directory)
-        break
-    print('\t=> Downloaded ' + str(download_count) + ' new files\n\n')
+                print('- Downloaded ' + os.path.basename(bids_endpoints[filetype]['Link']))
+    if download_count == 0:
+        print('\t=> No new files downloaded\n\n')
+    else:
+        print('\t=> Downloaded ' + str(download_count) + ' new files\n\n')
 
     # Download the images and their related files
-    images_total = len(bids_endpoints['Images'])
-    print("-------------------------------------------\n")
-    print('Downloading images and their related files...\n')
-    print(str(images_total) + ' image NIfTI BIDS files found\n')
-    print("-------------------------------------------\n")
+    requested_images = find_out_list_of_images_to_download(bids_endpoints['Images'])
+    images_total = len(requested_images)
+    print("-------------------------------------------")
+    print('Downloading images and their related files...')
+    print('\t' + str(images_total) + ' image NIfTI BIDS files found')
+    print("-------------------------------------------")
     download_count = 0
-    for file_dict in bids_endpoints['Images']:
-        image_modality = file_dict['LorisScanType']
-        # skip if the user provided modalities to download and the file's scan type is not included in the modalities requested by the user
-        if requested_modalities and not is_modality_in_the_requested_list(image_modality):
-            continue
-        image_directory = outputdir + '/' + file_dict['Candidate'] + '/' + file_dict['Visit'] + '/' + file_dict['Subfolder']
+    for file_dict in requested_images:
+        image_directory = outputdir + '/sub-' + file_dict['Candidate'] + '/ses-' + file_dict['Visit'] + '/' + file_dict['Subfolder']
         try:
             os.makedirs(image_directory)
         except OSError as e:
@@ -373,6 +380,7 @@ elif downloadtype == 'bids':
         download_success = download_file(file_dict['NiftiLink'], image_directory)
         if download_success:
             download_count += 1
+            print('- Downloaded ' + os.path.basename(file_dict['NiftiLink']))
         download_success = download_file(file_dict['JsonLink'], image_directory)
         if 'BvalLink' in file_dict.keys():
             download_success = download_file(file_dict['BvalLink'], image_directory)
@@ -381,8 +389,40 @@ elif downloadtype == 'bids':
         if 'EventLink' in file_dict.keys():
             print(file_dict['EventLink'])
             download_success = download_file(file_dict['EventLink'], image_directory)
-    print('\t=> Downloaded ' + str(download_count) + ' new files\n\n')
+    if download_count == 0:
+        print('\t=> No new images downloaded\n\n')
+    else:
+        print('\t=> Downloaded ' + str(download_count) + ' new NIfTI images with their associated files\n\n')
 
-    print('\n-------------------------------------------')
-    print('\nFinished downloading the open PREVENT-AD BIDS dataset')
-    print('\n-------------------------------------------\n')
+    # Download the *scans.tsv visit files
+    final_sessions_list = find_out_list_of_sessions_with_images(requested_images, bids_endpoints['SessionFiles'])
+    scans_total = len(final_sessions_list)
+    print("-------------------------------------------")
+    print('Downloading visit level *scans.tsv and *scans.json files...')
+    print('\t' + str(scans_total) + ' visit level *_scans.* BIDS files found')
+    print("-------------------------------------------")
+    download_count = 0
+    for file_dict in final_sessions_list:
+        visit_directory = outputdir + '/sub-' + file_dict['Candidate'] + '/ses-' + file_dict['Visit']
+        try:
+            os.makedirs(visit_directory)
+        except OSError as e:
+            if e.errno == errno.EEXIST:
+                pass
+            else:
+                print(errno.EEXIST)
+                print(e.errno)
+                raise
+        download_success = download_file(file_dict['TsvLink'], visit_directory)
+        if download_success:
+            download_count += 1
+            print('- Downloaded ' + os.path.basename(file_dict['TsvLink']))
+        download_success = download_file(file_dict['JsonLink'], visit_directory)
+    if download_count == 0:
+        print('\t=> No new *scans* files downloaded\n\n')
+    else:
+        print('\t=> Downloaded ' + str(download_count) + ' new *scans.tsv files with their associated *scans.json files\n\n')
+
+    print('********************************************************')
+    print('* Finished downloading the open PREVENT-AD BIDS dataset ')
+    print('********************************************************\n')
