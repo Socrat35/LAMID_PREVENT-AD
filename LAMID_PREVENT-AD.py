@@ -12,7 +12,7 @@ import errno        # For python 2.7 compatibility
 import getpass      # For input prompt not to show what is entered
 import json         # Provide convenient functions to handle JSON objects 
 import requests     # To handle HTTP requests
-import re           # Handle regular expression comparisons
+import re           # Handle regular expression
 
 # Python 2.7 compatibility
 try:
@@ -20,16 +20,21 @@ try:
 except NameError:
     pass
 
+# ### Set the API base URL to be used for API calls
+
+# In [ ]:
+
 hostname = 'openpreventad.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
 
 
-# ### Script options handling
-# This ask the user to specify a directory where files should be downloaded
+# ### Script options set up
+# Users can can specify, where to download the files, which modalities to restrict the download
+# to and under which format the data should be downloaded (a.k.a. BIDS [default format] or MINC).
 
 # In[ ]:
 
-downloadtype = 'bids'
+# Set the list of the different scan types available for download
 loris_scan_types = [
     'asl',
     'bold',
@@ -44,43 +49,61 @@ loris_scan_types = [
     'task-encoding-bold',
     'task-retrieval-bold'
 ]
-requested_modalities = False
 
-if '-f' in sys.argv:
-    outputdir = input("Download directory absolute path :\n(press ENTER for current directory)") or os.getcwd()
+# Set the default download to be the BIDS dataset
+downloadtype = 'bids'
 
+# Will store the list of requested modalities if user does not want to download everything
+requested_modalities = []
+
+# Set the description and options for the script
+description = '\nThis tool facilitates the download of the open PREVENT-AD dataset. ' \
+                'Data are provided under two different formats:\n' \
+              '\t - data organized according to the BIDS standard or \n' \
+              '\t - data available under the MINC format.\n' \
+              'By default, the data will be downloaded according to the BIDS standard.\n'
+usage = (
+    '\n'
+    'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
+    'options: \n'
+    '\t-o, --outputdir : path to the directory where the downloaded files will go \n'
+    '\t-t, --type      : data organization - available options: <bids> or <minc>, default to <bids>\n'
+    '\t-m, --modalities: comma-separated list of modalities to download. By default all modalities will be downloaded.'
+                             ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
+)
+
+# Grep the options given to the script
+try:
+    opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:")
+except getopt.GetoptError:
+    sys.exit(2)
+for opt, arg in opts:
+    if opt == '-h':
+        print(description + usage)
+        sys.exit()
+    elif opt == '-o':
+        outputdir = arg
+    elif opt == '-t':
+        downloadtype = arg
+    elif opt == '-m':
+        requested_modalities = arg
+
+# ### Script options checking
+# This asks the user to specify a directory where files should be downloaded if `-o` was
+# not specified when running the script. It also verifies that options have been properly
+# set to valid values.
+
+# In[ ]:
+
+# Asks the user for a directory where to download the data if none was provided using the
+# option `-o`.
+if '-o' not in sys.argv:
+    input_text = 'Please specify a download directory absolute path:\n(Press ENTER to download in the current directory)'
+    outputdir  = input(input_text) or os.getcwd()
 else:
-
-    description = '\nThis tool facilitates the download of the open PREVENT-AD dataset. Data are provided under two different formats:\n' \
-                  '\t - data organized according to the BIDS standard or \n' \
-                  '\t - data available under the MINC format.\n' \
-                  'By default, the data will be downloaded according to the BIDS standard.\n'
-    usage = (
-        '\n'
-        'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
-        'options: \n'
-        '\t-o, --outputdir : path to the directory where the downloaded files will go \n'
-        '\t-t, --type      : data organization - available options: <bids> or <minc>, default to <bids>\n'
-        '\t-m, --modalities: comma-separated list of modalities to download. By default all modalities will be downloaded. '
-                                 'Available modalities are: ' + ','.join(loris_scan_types) + '\n'
-    )
-
     outputdir = os.getcwd()
-    try:
-      opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:")
-    except getopt.GetoptError:
-      sys.exit(2)
-    for opt, arg in opts:
-      if opt == '-h':
-         print(description + usage)
-         sys.exit()
-      elif opt == '-o':
-         outputdir = arg
-      elif opt == '-t':
-          downloadtype = arg
-      elif opt == '-m':
-          requested_modalities = arg
 
+# Exits if the output directory is not writable
 if not os.path.isdir(outputdir):
     print('outputdir ' + outputdir + ' is not writable')
     exit()
@@ -89,10 +112,13 @@ print("\n*******************************************")
 print('Files will be downloaded in ' + outputdir + '/')
 print("*******************************************\n")
 
+# Exits if the download type provided to the script with option `-t` is not <bids> or <minc>
 if downloadtype not in ('bids', 'minc'):
     print('Invalid option for -t, --type. Valid options for -t, --type are <bids> or <minc> ')
     exit(2)
 
+# Exits if modality types provided to the script with option `-m` are not in the list of
+# available modalities in LORIS
 if requested_modalities:
     requested_modalities_list = str(requested_modalities).split(',')
     for requested_modality in requested_modalities_list:
@@ -100,11 +126,11 @@ if requested_modalities:
             print(requested_modality + ' is not a valid PREVENT-AD modality')
             exit(2)
 
+
 # ### Login procedure  
-# This will ask for your username and password and print the login result
+# This will ask for your LORIS username and password and print the login result.
 
 # In[ ]:
-
 
 print('Login on ' + hostname)
 
@@ -132,15 +158,26 @@ else:
     exit()
 
 
+# ### Function `download_file`
+# This will download a file in the specified directory based on a LORIS API link.
+# Caveat: It wont download files that already exists. This validation is based on
+# filename solely and not on its content... yet
+
+# In[ ]:
+
 def download_file(file_link, local_directory):
     """
     Download a file through the LORIS API.
 
-    Caveat: It wont download files that already exists. This validation is based on filename solely and not on its content... yet
+    Caveat: It wont download files that already exists. This validation is based on
+    filename solely and not on its content... yet
 
-    :param file_link      : API URL to use to download the file (from /candidates/ or /projects/ part)
-    :param download_count : the download count to be updated
+    :param file_link      : download file API URL (from /candidates/ or /projects/ part)
+     :type file_link      : str
     :param local_directory: local directory where the file will be downloaded
+     :type local_directory: str
+
+    :return bool: True if the file was successfully download, False otherwise
     """
 
     basename = os.path.basename(file_link)
@@ -175,8 +212,25 @@ def download_file(file_link, local_directory):
     return True if download_status else False
 
 
-def is_modality_in_the_requested_list(modality):
+# ### Function `is_modality_in_the_requested_list`
+# This will check if the modality of a file is in the list of requested modality.
 
+# In[ ]:
+
+def is_modality_in_the_requested_list(modality):
+    """
+    Checks if the modality of a file is in the list of requested modalities by the user.
+
+    Note: if the scan type is 'bold', we cannot use the regex to filter the images as
+    the string 'bold' is present in other scan types. Instead, we check that the modality
+    of the file is indeed the string 'bold' to determine if the modality is in the
+    requested list of modalities.
+
+    :param modality: modality to check
+     :type modality: str
+
+    :return bool: True if the modality is in the requested modalities list, False otherwise
+    """
     for requested_scan_type in requested_modalities_list:
         if requested_scan_type == 'bold':
             return True if modality == 'bold' else False
@@ -188,12 +242,29 @@ def is_modality_in_the_requested_list(modality):
     return False
 
 
-def find_out_list_of_images_to_download(images_list):
+# ### Function `find_out_list_of_images_to_download`
+# This will determine the list of images that will need to be downloaded based on what
+# modality was requested by the user.
 
+# In[ ]:
+
+def find_out_list_of_images_to_download(images_list):
+    """
+    Determine the list of images to download based on the list of requested
+    modalities by the user.
+
+    :param images_list: list of images returned by the API
+     :type images_list: list
+
+    :return list: list of images that will be downloaded based on the list of
+                  modalities requested by the user
+    """
     requested_images_list = []
     for image_dict in images_list:
-        image_modality = image_dict['LorisScanType'] if 'LorisScanType' in image_dict.keys() else image_dict['AcquisitionType']
-        # skip if the user provided modalities to download and the file's scan type is not included in the modalities requested by the user
+        scan_type_key = 'LorisScanType' if 'LorisScanType' in image_dict.keys() else 'AcquisitionType'
+        image_modality = image_dict[scan_type_key]
+        # skip if the user provided modalities to download and the file's scan type is
+        # not included in the list of modalities requested by the user
         if requested_modalities and not is_modality_in_the_requested_list(image_modality):
             continue
         requested_images_list.append(image_dict.copy())
@@ -201,8 +272,24 @@ def find_out_list_of_images_to_download(images_list):
     return requested_images_list
 
 
-def find_out_list_of_sessions_with_images(downloaded_images_list, sessions_list):
+# ### Function `find_out_list_of_sessions_with_images`
+# This will determine the list of session that will need to be downloaded based on
+# the list of images that have been downloaded.
 
+# In[ ]:
+
+def find_out_list_of_sessions_with_images(downloaded_images_list, sessions_list):
+    """
+    Determine the list of sessions to download based on the list of sessions that
+    include at least one modality provided by the user.
+
+    :param downloaded_images_list: list of images that have been downloaded
+     :type downloaded_images_list: list
+    :param sessions_list         : list of sessions returned by the API
+     :type sessions_list         : list
+
+    :return list: filtered list of sessions that contain the requested images
+    """
     downloaded_sessions = []
     for image_dict in downloaded_images_list:
         candidate   = image_dict['Candidate']
@@ -215,6 +302,11 @@ def find_out_list_of_sessions_with_images(downloaded_images_list, sessions_list)
 
 
 # ### Data download
+# The download is divided in two cases depending on what the user wants to download:
+# - download of the MINC files
+# - download of the BIDS files
+
+# In[ ]:
 
 if downloadtype == 'minc':
     # For each visit of each candidate this will create a directory `/<CandID>/<VisitLabel>` & download all files and their QC info into it.
