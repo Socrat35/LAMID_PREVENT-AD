@@ -50,11 +50,20 @@ loris_scan_types = [
     'task-retrieval-bold'
 ]
 
+# Set the list of visit labels available for download
+loris_visit_labels = [
+    'NAPBL00', 'NAPEN00', 'NAPFU03', 'NAPFU12', 'NAPFU24', 'NAPFU36', 'NAPFU48',
+    'PREBL00', 'PREEN00', 'PREFU12', 'PREFU24', 'PREFU36', 'PREFU48'
+]
+
 # Set the default download to be the BIDS dataset
 downloadtype = 'bids'
 
 # Will store the list of requested modalities if user does not want to download everything
 requested_modalities = []
+
+# Will store the list of requested visits if user does not want to download everything
+requested_visit_labels = []
 
 # Set the description and options for the script
 description = '\nThis tool facilitates the download of the open PREVENT-AD dataset. ' \
@@ -66,15 +75,17 @@ usage = (
     '\n'
     'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
     'options: \n'
-    '\t-o, --outputdir : path to the directory where the downloaded files will go \n'
-    '\t-t, --type      : data organization - available options: <bids> or <minc>, default to <bids>\n'
-    '\t-m, --modalities: comma-separated list of modalities to download. By default all modalities will be downloaded.'
+    '\t-o, --outputdir  : path to the directory where the downloaded files will go \n'
+    '\t-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>\n'
+    '\t-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded.'
                              ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
+    '\t-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded.'
+                             ' Available visit labels are: ' + ','.join(loris_visit_labels) + '\n'
 )
 
 # Grep the options given to the script
 try:
-    opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:")
+    opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:v:")
 except getopt.GetoptError:
     sys.exit(2)
 for opt, arg in opts:
@@ -87,6 +98,8 @@ for opt, arg in opts:
         downloadtype = arg
     elif opt == '-m':
         requested_modalities = arg
+    elif opt == '-v':
+        requested_visit_labels = arg
 
 # ### Script options checking
 # This asks the user to specify a directory where files should be downloaded if `-o` was
@@ -118,16 +131,27 @@ if downloadtype not in ('bids', 'minc'):
     exit(2)
 
 # Exits if modality types provided to the script with option `-m` are not in the list of
-# available modalities in LORIS
+# available modalities
 if requested_modalities:
     requested_modalities_list = str(requested_modalities).split(',')
     for requested_modality in requested_modalities_list:
         if requested_modality not in loris_scan_types:
-            print(requested_modality + ' is not a valid PREVENT-AD modality')
+            print(requested_modality + ' is not a valid PREVENT-AD modality.\n'
+                  + 'Available modalities are:\n' + ', '.join(loris_scan_types) + '\n')
+            exit(2)
+
+# Exits if visit labels provided to the script with option `-v` are not in the list of
+# available visit labels
+if requested_visit_labels:
+    requested_visit_labels_list = str(requested_visit_labels).split(',')
+    for requested_visit in requested_visit_labels_list:
+        if requested_visit not in loris_visit_labels:
+            print(requested_visit + ' is not a valid PREVENT-AD visit label.\n'
+                  + 'Available visit labels are:\n' + ', '.join(loris_visit_labels) + '\n')
             exit(2)
 
 
-# ### Login procedure  
+# ### Login procedure
 # This will ask for your LORIS username and password and print the login result.
 
 # In[ ]:
@@ -213,7 +237,7 @@ def download_file(file_link, local_directory):
 
 
 # ### Function `is_modality_in_the_requested_list`
-# This will check if the modality of a file is in the list of requested modality.
+# This will check if the modality of a file is in the list of requested modalities.
 
 # In[ ]:
 
@@ -242,6 +266,27 @@ def is_modality_in_the_requested_list(modality):
     return False
 
 
+# ### Function `is_visit_label_in_the_requested_list`
+# This will check if the visit label associated to a file is in the list of requested visits.
+
+# In[ ]:
+
+def is_visit_label_in_the_requested_list(visit):
+    """
+    Checks if the visit associated to a file is in the list of requested visits by the user.
+
+    :param visit: modality to check
+     :type visit: str
+
+    :return bool: True if the visit label is in the requested visits list, False otherwise
+    """
+    for requested_visit_label in requested_visit_labels_list:
+        if requested_visit_label == visit:
+            return True
+
+    return False
+
+
 # ### Function `find_out_list_of_images_to_download`
 # This will determine the list of images that will need to be downloaded based on what
 # modality was requested by the user.
@@ -261,12 +306,20 @@ def find_out_list_of_images_to_download(images_list):
     """
     requested_images_list = []
     for image_dict in images_list:
-        scan_type_key = 'LorisScanType' if 'LorisScanType' in image_dict.keys() else 'AcquisitionType'
+        scan_type_key  = 'LorisScanType' if 'LorisScanType' in image_dict.keys() else 'AcquisitionType'
         image_modality = image_dict[scan_type_key]
+        image_visit    = image_dict['Visit']
+
         # skip if the user provided modalities to download and the file's scan type is
         # not included in the list of modalities requested by the user
         if requested_modalities and not is_modality_in_the_requested_list(image_modality):
             continue
+
+        # skip if the user provided modalities to download and the file's scan type is
+        # not included in the list of modalities requested by the user
+        if requested_visit_labels and not is_visit_label_in_the_requested_list(image_visit):
+            continue
+
         requested_images_list.append(image_dict.copy())
 
     return requested_images_list
