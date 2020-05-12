@@ -192,7 +192,7 @@ def find_out_list_of_images_to_download(images_list):
 
     requested_images_list = []
     for image_dict in images_list:
-        image_modality = image_dict['LorisScanType'] if 'LorisScanType' in image_dict.keys() else image_dict['ScanType']
+        image_modality = image_dict['LorisScanType'] if 'LorisScanType' in image_dict.keys() else image_dict['AcquisitionType']
         # skip if the user provided modalities to download and the file's scan type is not included in the modalities requested by the user
         if requested_modalities and not is_modality_in_the_requested_list(image_modality):
             continue
@@ -292,12 +292,13 @@ if downloadtype == 'minc':
                 url = baseurl + '/candidates/' + candid + '/' + visit + '/images',
                 headers = {'Authorization': 'Bearer %s' % token}
             ).content.decode('ascii'))
-    
-            sessionfilecount = len(files['Files'])
+            requested_images = find_out_list_of_images_to_download(files['Files'])
+
+            sessionfilecount = len(requested_images)
             sys.stdout.write(str(sessionfilecount) + ' files found for session ' + visit)
     
             downloadcount = 0
-            for file in files['Files']:
+            for file in requested_images:
                 filename = file['Filename']
                 filelink = '/candidates/' + candid + '/' + visit + '/images/' + filename
 
