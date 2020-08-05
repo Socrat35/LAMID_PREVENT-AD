@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 # coding: utf-8
 
-# # LORIS API MRI images downloader for PREVENT-AD 
+# # LORIS API MRI images downloader for PREVENT-AD
 
 # In[ ]:
 
@@ -22,7 +22,7 @@ except NameError:
 
 # ### Set the API base URL to be used for API calls
 
-# In [ ]:
+# In[ ]:
 
 hostname = 'openpreventad.loris.ca'
 baseurl = 'https://' + hostname + '/api/v0.0.3-dev'
