@@ -88,7 +88,7 @@ However:
   - if you wish to download the images in MINC format, you can specify it when running the script
   with the option `-t` as follows: 
   
-  `python LAMID_PREVENT-AD.py -p minc`
+  `python LAMID_PREVENT-AD.py -t minc`
   
   - if you wish to download only the images of a specific modality(ies), you can specify it(them) when running
   the script with the option `m` as follows (example of t1w and FLAIR): 
