@@ -54,19 +54,57 @@ pip install errno
 ### 3.1 Using `LAMID_PREVENT-AD.py`
 
 In order to download the images from the open PREVENT-AD LORIS API, run the following
-command in the directory where you want the images to be downloaded:
+command to see the options that can be provided to the script:
 
-`python LAMID_PREVENT-AD.py`
+`python LAMID_PREVENT-AD.py -h`
 
-Note, by default the images will be downloaded in the current working directory. However,
-if you wish to download the images in a different directory, you can specify it when 
-running the script with the option `-o` as follows:
+This will print in the terminal the following guide:
 
-`python LAMID_PREVENT-AD.py -o %PATH_TO_DIRECTORY%`
+```
 
-with `%PATH_TO_DIRECTORY%` being replaced by the path to the directory where you want
-the files to be downloaded in.
+This tool facilitates the download of the open PREVENT-AD dataset. Data are provided under two different formats:
+	 - data organized according to the BIDS standard or 
+	 - data available under the MINC format.
+By default, the data will be downloaded according to the BIDS standard.
 
+usage  : LAMID_PREVENT-AD.py -o <outputdir> -t <bids/minc> 
+
+options: 
+	-o, --outputdir  : path to the directory where the downloaded files will go 
+	-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>
+	-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded. Available modalities are: asl,bold,dwi65,qT2star,fieldmap,FLAIR,MP2RAGE,t1w,T2star,t2w,task-encoding-bold,task-retrieval-bold
+	-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded. Available visit labels are: NAPBL00,NAPEN00,NAPFU03,NAPFU12,NAPFU24,NAPFU36,NAPFU48,PREBL00,PREEN00,PREFU12,PREFU24,PREFU36,PREFU48
+
+```
+
+Note, by default: all images will be downloaded in the current working directory in BIDS format. 
+However:
+  - if you wish to download the images in a different directory, you can specify it when 
+  running the script with the option `-o` as follows: 
+  
+  `python LAMID_PREVENT-AD.py -o %PATH_TO_DIRECTORY%` with `%PATH_TO_DIRECTORY%` being replaced 
+  by the path to the directory where you want the files to be downloaded in.
+  
+  - if you wish to download the images in MINC format, you can specify it when running the script
+  with the option `-t` as follows: 
+  
+  `python LAMID_PREVENT-AD.py -p minc`
+  
+  - if you wish to download only the images of a specific modality(ies), you can specify it(them) when running
+  the script with the option `m` as follows (example of t1w and FLAIR): 
+  
+  `python LAMID_PREVENT-AD.py -t t1w,FLAIR`
+  Available modalities are: asl, bold, dwi65, qT2star, fieldmap, FLAIR, MP2RAGE, t1w, T2star, t2w, 
+  task-encoding-bold, task-retrieval-bold
+  
+  - if you wish to download images of specify visit label(s), you can specify them it(them) when running
+  the script with the option `-v` as follows (example of baseline visits): 
+  
+  `python LAMID_PREVENT-AD.py -v PREBL00,NAPBL00`
+  Available visit labels are: NAPBL00, NAPEN00, NAPFU03, NAPFU12, NAPFU24, NAPFU36, NAPFU48, 
+  PREBL00, PREEN00, PREFU12, PREFU24, PREFU36, PREFU48
+
+A mix of all these options can be used to execute the script.
 
 
 ### 3.2 Using Jupiter Notebook
@@ -78,9 +116,11 @@ Notebook and execute the code in the notebook.
 
 ## 4. Organisation of the downloaded structure
 
+### 4.1 Organisation of the downloaded structure when downloading the dataset in MINC
+
 Below is a screenshot of the organization of a subset of the downloaded data.
 
-![](images/data_organization.png)
+![](images/data_organization_minc.png)
 
 All images are organized by candidate’s 7 digits ID and visit labels. 
 
@@ -97,3 +137,12 @@ QC information (in a JSON file) are available per modality acquired in the MRI s
     This JSON file contains image QC information (QC Status, Caveats, etc.)
   * The `session.json` information file contains information pertinent to the session 
     (Age at MRI, Subproject, etc.)
+
+### 4.1 Organisation of the downloaded structure when the dataset in BIDS
+
+Below is a screenshot of the organization of a subset of the downloaded data.
+
+![](images/data_organization_bids.png)
+
+All images are organized according to the BIDS standard. For more information
+on the BIDS standard, please visit https://bids.neuroimaging.io.

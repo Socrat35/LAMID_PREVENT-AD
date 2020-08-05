@@ -59,6 +59,9 @@ loris_visit_labels = [
 # Set the default download to be the BIDS dataset
 downloadtype = 'bids'
 
+# Will store the dataset will be downloaded
+outputdir = os.getcwd()
+
 # Will store the list of requested modalities if user does not want to download everything
 requested_modalities = []
 
@@ -66,40 +69,55 @@ requested_modalities = []
 requested_visit_labels = []
 
 # Set the description and options for the script
-description = '\nThis tool facilitates the download of the open PREVENT-AD dataset. ' \
-                'Data are provided under two different formats:\n' \
-              '\t - data organized according to the BIDS standard or \n' \
-              '\t - data available under the MINC format.\n' \
-              'By default, the data will be downloaded according to the BIDS standard.\n'
-usage = (
-    '\n'
-    'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
-    'options: \n'
-    '\t-o, --outputdir  : path to the directory where the downloaded files will go \n'
-    '\t-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>\n'
-    '\t-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded.'
-                             ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
-    '\t-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded.'
-                             ' Available visit labels are: ' + ','.join(loris_visit_labels) + '\n'
-)
+# Set the description and options for the script
+if '__file__' in globals():  # for .py script
+    description = '\nThis tool facilitates the download of the open PREVENT-AD dataset. ' \
+                  'Data are provided under two different formats:\n' \
+                  '\t - data organized according to the BIDS standard or \n' \
+                  '\t - data available under the MINC format.\n' \
+                  'By default, the data will be downloaded according to the BIDS standard.\n'
+    usage = (
+        '\n'
+        'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
+                                 'options: \n'
+                                 '\t-o, --outputdir  : path to the directory where the downloaded files will go \n'
+                                 '\t-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>\n'
+                                 '\t-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded.'
+                                 ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
+                                                                                              '\t-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded.'
+                                                                                              ' Available visit labels are: ' + ','.join(
+            loris_visit_labels) + '\n'
+    )
 
-# Grep the options given to the script
-try:
-    opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:v:")
-except getopt.GetoptError:
-    sys.exit(2)
-for opt, arg in opts:
-    if opt == '-h':
-        print(description + usage)
-        sys.exit()
-    elif opt == '-o':
-        outputdir = arg
-    elif opt == '-t':
-        downloadtype = arg
-    elif opt == '-m':
-        requested_modalities = arg
-    elif opt == '-v':
-        requested_visit_labels = arg
+    # Grep the options given to the script
+    try:
+        opts, args = getopt.getopt(sys.argv[1:], "ho:t:m:v:")
+    except getopt.GetoptError:
+        sys.exit(2)
+    for opt, arg in opts:
+        if opt == '-h':
+            print(description + usage)
+            sys.exit()
+        elif opt == '-o':
+            outputdir = arg
+        elif opt == '-t':
+            downloadtype = arg
+        elif opt == '-m':
+            requested_modalities = arg
+        elif opt == '-v':
+            requested_visit_labels = arg
+
+else:  # for the Jupyter Notebook
+    input_text = 'Please specify the download format of the dataset (i.e. bids|minc; default to bids)'
+    downloadtype = input(input_text) or 'bids'
+
+    input_text = 'Please specify which modalities to download as a comma-separated list (i.e. ' + ','.join(
+        loris_scan_types) + '; download all modalities by default)'
+    requested_modalities = input(input_text) or ','.join(loris_scan_types)
+
+    input_text = 'Please specify which visit labels to download as a comma-separated list (i.e. ' + ','.join(
+        loris_visit_labels) + '; download all visits by default)'
+    requested_visit_labels = input(input_text) or ','.join(loris_visit_labels)
 
 # ### Script options checking
 # This asks the user to specify a directory where files should be downloaded if `-o` was
@@ -113,8 +131,6 @@ for opt, arg in opts:
 if '-o' not in sys.argv:
     input_text = 'Please specify a download directory absolute path:\n(Press ENTER to download in the current directory)'
     outputdir  = input(input_text) or os.getcwd()
-else:
-    outputdir = os.getcwd()
 
 # Exits if the output directory is not writable
 if not os.path.isdir(outputdir):
