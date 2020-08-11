@@ -67,7 +67,7 @@ This tool facilitates the download of the open PREVENT-AD dataset. Data are prov
 	 - data available under the MINC format.
 By default, the data will be downloaded according to the BIDS standard.
 
-usage  : LAMID_PREVENT-AD.py -o <outputdir> -t <bids/minc> 
+usage  : LAMID_PREVENT-AD.py -o <outputdir> [ -t { bids | minc } ] [ -m modality[, ... ] ]  [ -v visit_label[, ... ] ] 
 
 options: 
 	-o, --outputdir  : path to the directory where the downloaded files will go 
