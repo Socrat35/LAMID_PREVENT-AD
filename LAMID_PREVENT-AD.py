@@ -78,15 +78,15 @@ if '__file__' in globals():  # for .py script
                   'By default, the data will be downloaded according to the BIDS standard.\n'
     usage = (
         '\n'
-        'usage  : ' + __file__ + ' -o <outputdir> -t <bids/minc> \n\n'
-                                 'options: \n'
-                                 '\t-o, --outputdir  : path to the directory where the downloaded files will go \n'
-                                 '\t-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>\n'
-                                 '\t-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded.'
-                                 ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
-                                                                                              '\t-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded.'
-                                                                                              ' Available visit labels are: ' + ','.join(
-            loris_visit_labels) + '\n'
+        'usage  : ' + __file__ + ' -o <outputdir> -t { bids | minc } [ -t { bids | minc } ]'
+            ' [ -m modality[, ... ] ]  [ -v visit_label[, ... ] ]\n\n'
+        'options: \n'
+            '\t-o, --outputdir  : path to the directory where the downloaded files will go \n'
+            '\t-t, --type       : data organization - available options: <bids> or <minc>, default to <bids>\n'
+            '\t-m, --modalities : comma-separated list of modalities to download. By default all modalities will be downloaded.'
+                ' Available modalities are: ' + ','.join(loris_scan_types) + '\n'
+            '\t-v, --visitlabels: comma-separated list of visit labels to download. By default all visits will be downloaded.'
+                ' Available visit labels are: ' + ','.join(loris_visit_labels) + '\n'
     )
 
     # Grep the options given to the script
