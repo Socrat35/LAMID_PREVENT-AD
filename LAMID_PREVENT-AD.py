@@ -324,7 +324,6 @@ def find_out_list_of_images_to_download(images_list):
     for image_dict in images_list:
         scan_type_key  = 'LorisScanType' if 'LorisScanType' in image_dict.keys() else 'AcquisitionType'
         image_modality = image_dict[scan_type_key]
-        image_visit    = image_dict['Visit']
 
         # skip if the user provided modalities to download and the file's scan type is
         # not included in the list of modalities requested by the user
@@ -332,9 +331,11 @@ def find_out_list_of_images_to_download(images_list):
             continue
 
         # skip if the user provided modalities to download and the file's scan type is
-        # not included in the list of modalities requested by the user
-        if requested_visit_labels and not is_visit_label_in_the_requested_list(image_visit):
-            continue
+        # not included in the list of visits requested by the user
+        # Note: 'Visit' is a key in the API response for BIDS but not for MINC...
+        if 'Visit' in image_dict:
+            if requested_visit_labels and not is_visit_label_in_the_requested_list(image_dict['Visit']):
+                continue
 
         requested_images_list.append(image_dict.copy())
 
@@ -423,6 +424,10 @@ if downloadtype == 'minc':
     
         for visit in sessions['Visits']:
 
+            # skip that session if it is not in the list of requested visits
+            if requested_visit_labels and not is_visit_label_in_the_requested_list(visit):
+                continue
+
             print('\tProcessing visit ' + visit + '\n')
     
             # Create the directory for that visit if it doesn't already exists
@@ -442,7 +447,7 @@ if downloadtype == 'minc':
                 url = baseurl + '/candidates/' + candid + '/' + visit,
                 headers = {'Authorization': 'Bearer %s' % token}
             ).content.decode('ascii'))
-    
+
             # Write the session information into a JSON file
             sessionmetafile = open(directory + '/session.json', "w")
             sessionmetafile.write(str(session['Meta']))
