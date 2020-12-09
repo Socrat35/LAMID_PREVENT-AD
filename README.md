@@ -93,7 +93,7 @@ However:
   - if you wish to download only the images of a specific modality(ies), you can specify it(them) when running
   the script with the option `m` as follows (example of t1w and FLAIR): 
   
-  `python LAMID_PREVENT-AD.py -t t1w,FLAIR`
+  `python LAMID_PREVENT-AD.py -m t1w,FLAIR`
   Available modalities are: asl, bold, dwi65, qT2star, fieldmap, FLAIR, MP2RAGE, t1w, T2star, t2w, 
   task-encoding-bold, task-retrieval-bold
   
