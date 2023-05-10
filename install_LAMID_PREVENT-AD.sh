@@ -44,7 +44,7 @@ echo 'python is installed'
 echo ''
 
 #checking if all packages are available
-declare -a packages=("sys" "getopt" "os" "errno" "getpass" "json" "requests")
+declare -a packages=("sys" "getopt" "os" "errno" "getpass" "json" "requests" "argparse" "multiprocessing" "datetime" "future")
 for package in "${packages[@]}"
 do
     if ! python -c "import pkgutil; exit(not pkgutil.find_loader(\"${package}\"))"; then
