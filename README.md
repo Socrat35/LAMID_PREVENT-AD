@@ -9,7 +9,8 @@ However, various ways to download the imaging dataset are provided in this repos
  
 Users can choose one of the following tool to download the open PREVENT-AD images:
   - a Python script called `LAMID_PREVENT-AD.py`
-  - Jupiter Notebook called `LAMID_PREVENT-AD.ipynb` 
+  - Jupiter Notebook called `LAMID_PREVENT-AD.ipynb`
+  - a newer Python script called `BHD.py`
 
 See section 2 below for the installation steps required for the tools available in 
 this repository.
@@ -18,8 +19,8 @@ this repository.
 
 Requirements for the script:
 - Python 2.7 or Python 3
-- the following Python libraries: `getpass`, `json`, `requests`, `os`, `sys`, `getopt`
-and `errno`. 
+- the following Python libraries: `getpass`, `json`, `requests`, `os`, `sys`, `getopt`, 
+- `errno`, `argparse`, `multiprocessing`, `datetime` and `future`. 
 
 ### Installation script (requires Ubuntu and sudo permission)
 
@@ -46,6 +47,10 @@ pip install os
 pip install sys
 pip install getopt
 pip install errno
+pip install argparse
+pip install multiprocessing
+pip install datetime
+pip install future
 ```
 
 
@@ -112,7 +117,12 @@ A mix of all these options can be used to execute the script.
 Open the Jupiter Notebook file `LAMID_PREVENT-AD.ipynb` in Jupiter
 Notebook and execute the code in the notebook.
 
+### 3.3 Using `BHD.py`
 
+The BHD.py script contains an help function that details the different options available. Said function is accessible
+through the -h or --help parameters. The script is designed mainly for bulk downloading and will download everything
+in either format as a default. A capacity to only download the data related to certain candidates is, however, also
+available.
 
 ## 4. Organisation of the downloaded structure
 
